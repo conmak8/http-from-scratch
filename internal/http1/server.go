@@ -53,9 +53,5 @@ func HandleConnection(conn net.Conn, mux http.Handler) error {
 	mux.ServeHTTP(res, req)
 
 	return nil
-	/*
-			Functions that might be useful:
-			* ParseRequest()
-		  * mux.ServeHTTP()
-	*/
+
 }

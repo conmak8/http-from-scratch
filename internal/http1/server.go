@@ -49,6 +49,10 @@ func HandleConnection(conn net.Conn, mux http.Handler) error {
 		return err
 	}
 
+	// Temporary verification log:
+	// with curl -v -H "X-Custom-Token: abc123" http://localhost:8080/hello
+	//log.Printf("Successfully parsed request: Method=%s Path=%s Headers=%v", req.Method, req.URL.Path, req.Header)
+
 	res := NewResponse(conn)
 	mux.ServeHTTP(res, req)
 

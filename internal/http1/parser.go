@@ -73,5 +73,6 @@ func ParseRequest(reader *bufio.Reader) (*http.Request, error) {
 		req.Header.Add(header, headerValue)
 	}
 
+	req.Body = http.NoBody
 	return req, nil
 }

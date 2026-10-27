@@ -44,5 +44,34 @@ func ParseRequest(reader *bufio.Reader) (*http.Request, error) {
 		Header: make(http.Header),
 	}
 
+	for {
+		// read one line
+		nextLine, err := reader.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+
+		// trim line breaks
+		nextLine = strings.TrimRight(nextLine, "\r\n")
+
+		// detect end of headers
+		if nextLine == "" {
+			break
+		}
+
+		// split key value
+		parts := strings.SplitN(nextLine, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("the header is malformed: %q", nextLine)
+		}
+
+		// trim possible white spaces
+		header := strings.TrimSpace(parts[0])
+		headerValue := strings.TrimSpace(parts[1])
+
+		// store in map
+		req.Header.Add(header, headerValue)
+	}
+
 	return req, nil
 }

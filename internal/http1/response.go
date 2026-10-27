@@ -1,6 +1,7 @@
 package http1
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 )
@@ -26,7 +27,13 @@ func (r *Response) Header() http.Header {
 }
 
 func (r *Response) Write(data []byte) (n int, err error) {
-	panic("Response.Write: Not Implemented")
+	// make sure http header have been transmitted
+	if !r.wroteHeader {
+		r.WriteHeader(http.StatusOK)
+	}
+
+	//stream raw body bytes
+	return r.conn.Write(data)
 }
 
 func (r *Response) WriteHeader(statusCode int) {
@@ -35,4 +42,16 @@ func (r *Response) WriteHeader(statusCode int) {
 	}
 	r.wroteHeader = true
 	r.statusCode = statusCode
+
+	// status line according to RFC
+	fmt.Fprintf(r.conn, "HTTP/1.1 %d %s\r\n", statusCode, http.StatusText(statusCode))
+
+	// loop over header and write each key: values
+	for key, values := range r.header {
+		for _, val := range values {
+			fmt.Fprintf(r.conn, "%s: %s\r\n", key, val)
+		}
+	}
+
+	fmt.Fprintf(r.conn, "\r\n")
 }

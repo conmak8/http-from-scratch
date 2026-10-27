@@ -6,10 +6,19 @@ import (
 )
 
 type Response struct {
+	conn        net.Conn
+	header      http.Header
+	statusCode  int
+	wroteHeader bool
 }
 
 func NewResponse(conn net.Conn) *Response {
-	panic("NewResponse: Not Implemented")
+	return &Response{
+		conn:        conn,              // sendig data to whom
+		header:      make(http.Header), // store headers without nil map panic
+		statusCode:  http.StatusOK,     // HTTP status ? if handler doesnt set one?
+		wroteHeader: false,             // are any bytes already send?
+	}
 }
 
 func (r *Response) Header() http.Header {

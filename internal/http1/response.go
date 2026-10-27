@@ -22,7 +22,7 @@ func NewResponse(conn net.Conn) *Response {
 }
 
 func (r *Response) Header() http.Header {
-	panic("Response.Header: Not Implemented")
+	return r.header
 }
 
 func (r *Response) Write(data []byte) (n int, err error) {
@@ -30,5 +30,9 @@ func (r *Response) Write(data []byte) (n int, err error) {
 }
 
 func (r *Response) WriteHeader(statusCode int) {
-	panic("Response.WriteHeader: Not Implemented")
+	if r.wroteHeader {
+		return
+	}
+	r.wroteHeader = true
+	r.statusCode = statusCode
 }

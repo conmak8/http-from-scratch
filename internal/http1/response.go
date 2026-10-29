@@ -71,8 +71,8 @@ func (r *Response) Flush(reqMethod string) error {
 		return err
 	}
 
-	// Calculate Content-Length if not already provided and method is not HEAD
-	if r.header.Get("Content-Length") == "" && reqMethod != http.MethodHead {
+	//  Set Content-Length if not already present and not a HEAD request
+	if reqMethod != http.MethodHead && r.header.Get("Content-Length") == "" {
 		r.header.Set("Content-Length", strconv.Itoa(r.body.Len()))
 	}
 
@@ -85,7 +85,7 @@ func (r *Response) Flush(reqMethod string) error {
 		}
 	}
 
-	// End of Headers (the standalone CRLF)
+	// End of Headers
 	if _, err := fmt.Fprintf(r.conn, "\r\n"); err != nil {
 		return err
 	}

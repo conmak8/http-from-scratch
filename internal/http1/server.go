@@ -46,33 +46,27 @@ func HandleConnection(conn net.Conn, mux http.Handler) error {
 	for {
 		req, err := ParseRequest(reader)
 		if err != nil {
-			// if client closed the connection will retrun nil
-			if err != nil {
-				if err == io.EOF {
-					return nil
-				}
-
-				// Handle specific protocol version errors
-				if errors.Is(err, ErrVersionNotSupported) {
-					errorResponse := "HTTP/1.1 505 HTTP Version Not Supported\r\nConnection: close\r\n\r\n"
-					conn.Write([]byte(errorResponse))
-					return nil
-				}
-
-				// Fallback for all other parsing errors
-				errorResponse := "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
-				conn.Write([]byte(errorResponse))
+			// Clean disconnect: client closed without sending any pending request
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
-
-			// 400 bad request to conn before returning directly to socket
-			errorResponse := "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
-			conn.Write([]byte(errorResponse))
-
-			return err // as to trigger defer conn.Close()
+			// Unsupported HTTP version -> 505
+			if errors.Is(err, ErrVersionNotSupported) {
+				conn.Write([]byte("HTTP/1.1 505 HTTP Version Not Supported\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"))
+				return nil
+			}
+			// Malformed request -> 400 Bad Request
+			conn.Write([]byte("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"))
+			return nil
 		}
+
 		res := NewResponse(conn)
 		mux.ServeHTTP(res, req)
+
+		// Flush the response down the wire with correct Content-Length
+		if err := res.Flush(req.Method); err != nil {
+			return err
+		}
 
 		// Check if client asked to close, or if HTTP/1.0 didn't ask for keep-alive
 		if strings.EqualFold(req.Header.Get("Connection"), "close") {

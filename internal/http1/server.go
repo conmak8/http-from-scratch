@@ -2,6 +2,7 @@ package http1
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -46,11 +47,25 @@ func HandleConnection(conn net.Conn, mux http.Handler) error {
 		req, err := ParseRequest(reader)
 		if err != nil {
 			// if client closed the connection will retrun nil
-			if err == io.EOF {
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				}
+
+				// Handle specific protocol version errors
+				if errors.Is(err, ErrVersionNotSupported) {
+					errorResponse := "HTTP/1.1 505 HTTP Version Not Supported\r\nConnection: close\r\n\r\n"
+					conn.Write([]byte(errorResponse))
+					return nil
+				}
+
+				// Fallback for all other parsing errors
+				errorResponse := "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
+				conn.Write([]byte(errorResponse))
 				return nil
 			}
 
-			// TODO: 400 bad request to conn before returning directly to socket
+			// 400 bad request to conn before returning directly to socket
 			errorResponse := "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
 			conn.Write([]byte(errorResponse))
 

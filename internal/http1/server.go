@@ -30,12 +30,6 @@ func ListenAndServe(addr string, handler http.Handler) error {
 		}
 
 		go HandleConnection(conn, handler)
-
-		/*
-				Functions that might be useful:
-				* listener.Accept()
-			  * HandleConnection()
-		*/
 	}
 }
 

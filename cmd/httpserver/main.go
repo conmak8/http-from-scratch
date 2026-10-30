@@ -44,6 +44,10 @@ func main() {
 		fmt.Fprintf(w, "Method %s not allowed on /users\n", r.Method)
 	})
 
+	mux.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello\n")
+	})
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "OK\n")
 	})
